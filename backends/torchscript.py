@@ -7,9 +7,9 @@ from time import perf_counter
 import torch
 from backends.ort import benchmark_ORT
 from transformers import AutoModel, TensorType
-from utils.utils import get_dummy_inputs, get_dummy_inputs, csv_writer
+from utils.utils import get_dummy_inputs, get_dummy_inputs, csv_writer, SEC_TO_MS_SCALE
 import csv
-def benchmark_Torchscript(model_path, batch_size,sequence_length, backend, output_folder):
+def benchmark_Torchscript(model_path, batch_size,sequence_length, backend, output_folder, duration):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = BertTokenizerFast.from_pretrained("bert-base-cased")
@@ -32,21 +32,24 @@ def benchmark_Torchscript(model_path, batch_size,sequence_length, backend, outpu
     attention_mask = model_inputs["attention_mask"].to(device) 
     for _ in range(10):
         _ = model(input_ids,attention_mask)
-        
-    for _ in range(100):
+    duration = (int(duration) * SEC_TO_MS_SCALE)
+    while sum(latencies) < duration:
         start_time = perf_counter()
         _ = model(input_ids,attention_mask)
-        latency = (perf_counter() - start_time )*1000
+        latency = (perf_counter() - start_time)*SEC_TO_MS_SCALE
         latencies.append(latency)
+    print("*******", len(latencies), sum(latencies))
     bechmark_metrics={
         
-            "latency_mean": np.mean(latencies),
-            "latency_std": np.std(latencies),
-            "latency_50": np.quantile(latencies, 0.5),
-            "latency_90": np.quantile(latencies, 0.9),
-            "latency_95": np.quantile(latencies, 0.95),
-            "latency_99": np.quantile(latencies, 0.99),
-            "latency_999": np.quantile(latencies, 0.999),
+        "latency_mean": np.mean(latencies),
+        "latency_std": np.std(latencies),
+        "throughput":round((len(latencies)/duration)*SEC_TO_MS_SCALE,2),
+
+        "latency_50": np.quantile(latencies, 0.5),
+        "latency_90": np.quantile(latencies, 0.9),
+        "latency_95": np.quantile(latencies, 0.95),
+        "latency_99": np.quantile(latencies, 0.99),
+        "latency_999": np.quantile(latencies, 0.999),
     }
     csv_writer(bechmark_metrics, backend, batch_size,sequence_length, output_folder)
     
