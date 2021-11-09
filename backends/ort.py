@@ -19,10 +19,10 @@ import numpy as np
 from time import perf_counter
 import torch
 from transformers import TensorType
-from utils.utils import get_dummy_inputs, get_dummy_inputs, csv_writer
+from utils.utils import get_dummy_inputs, get_dummy_inputs, csv_writer, SEC_TO_MS_SCALE
 import csv 
 
-def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder):
+def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder, duration):
     model = onnxruntime.InferenceSession(model_path)   
 
     tokenizer = BertTokenizerFast.from_pretrained("bert-base-cased")
@@ -43,16 +43,19 @@ def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder
     # Warmup
     for _ in range(10):
         _ = model.run(None, inputs)
-        
-    for _ in range(1000):
+
+    duration = (int(duration) * SEC_TO_MS_SCALE)
+    
+    while sum(latencies) < duration:
         start_time = perf_counter()
         _ = model.run(None, inputs)
-        latency = (perf_counter() - start_time)*1000
+        latency = (perf_counter() - start_time)*SEC_TO_MS_SCALE
         latencies.append(latency)
         # Compute run statistics
     bechmark_metrics={
         "latency_mean": np.mean(latencies),
         "latency_std": np.std(latencies),
+        "throughput":round((len(latencies)/duration)*SEC_TO_MS_SCALE,2),
         "latency_50": np.quantile(latencies, 0.5),
         "latency_90": np.quantile(latencies, 0.9),
         "latency_95": np.quantile(latencies, 0.95),
