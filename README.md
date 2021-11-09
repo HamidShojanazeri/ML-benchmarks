@@ -1,6 +1,6 @@
 # ML-benchmarks
 
-To add your inference backend/engine add it in backend folder
+To add your inference backend/engine add it in backend folder and modify the benchmark_runs.py to add your backend.
 
 To run the benchmarks follows:
 
@@ -9,6 +9,6 @@ Supported backend so far:
 - ort
 
 ```
-python benchmark_runs.py --model_path traced_model.pt --backend torchscript --output_path ./benchmark-output
+python benchmark_runs.py --model_path traced_model.pt --backend torchscript --output_path ./benchmark-output --duration 5
 
 ```
