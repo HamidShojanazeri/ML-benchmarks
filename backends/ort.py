@@ -63,5 +63,34 @@ def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder
         "latency_999": np.quantile(latencies, 0.999),
     }
     csv_writer(bechmark_metrics, backend, batch_size,sequence_length, output_folder)
-   
-        
+
+def profile_ORT(model_path, batch_size,sequence_length, output_folder):
+    model = onnxruntime.InferenceSession(model_path)   
+
+    tokenizer = BertTokenizerFast.from_pretrained("bert-base-cased")
+    # model_inputs = tokenizer("My name is Bert", return_tensors="pt")
+    dummy_inputs = get_dummy_inputs(
+            batch_size=batch_size,
+            seq_len=(sequence_length - tokenizer.num_special_tokens_to_add(pair=False)),tokenizer=tokenizer
+        )
+
+    inputs = tokenizer(
+        dummy_inputs,
+        is_split_into_words=True,
+        return_tensors=TensorType.NUMPY,
+    )
+    inputs = {k: v.astype("i8") for k, v in inputs.items()}
+
+    with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU,torch.profiler.ProfilerActivity.CUDA],
+    schedule=torch.profiler.schedule(
+    wait=2,
+    warmup=2,
+    active=6,
+    repeat=1),
+    on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/{}'.format(output_folder)),
+    with_stack=True) as profiler:
+        for i in range(1000):
+            # _ = ts_model(input_ids,attention_mask)
+            _ = model.run(None, inputs)
+            profiler.step()
+
