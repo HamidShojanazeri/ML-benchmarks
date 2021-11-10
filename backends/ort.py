@@ -90,7 +90,6 @@ def profile_ORT(model_path, batch_size,sequence_length, output_folder):
     on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/{}'.format(output_folder)),
     with_stack=True) as profiler:
         for i in range(1000):
-            # _ = ts_model(input_ids,attention_mask)
             _ = model.run(None, inputs)
             profiler.step()
 
