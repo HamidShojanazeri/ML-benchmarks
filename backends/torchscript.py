@@ -53,3 +53,35 @@ def benchmark_Torchscript(model_path, batch_size,sequence_length, backend, outpu
     }
     csv_writer(bechmark_metrics, backend, batch_size,sequence_length, output_folder)
     
+def profile_torchscript(model_path, batch_size,sequence_length, output_folder):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    tokenizer = BertTokenizerFast.from_pretrained("bert-base-cased")
+    # model_inputs = tokenizer("My name is Bert", return_tensors="pt")
+    model = torch.jit.load(model_path, map_location=device)
+    dummy_inputs = get_dummy_inputs(
+            batch_size=batch_size,
+            seq_len=(sequence_length - tokenizer.num_special_tokens_to_add(pair=False)),tokenizer=tokenizer
+        )
+
+    inputs = tokenizer(
+        dummy_inputs,
+        is_split_into_words=True,
+        return_tensors=TensorType.PYTORCH,
+    )
+    model_inputs = inputs
+    latencies = []
+    # Warmup
+    input_ids = model_inputs["input_ids"].to(device)
+    attention_mask = model_inputs["attention_mask"].to(device) 
+
+    with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU,torch.profiler.ProfilerActivity.CUDA],
+    schedule=torch.profiler.schedule(
+    wait=2,
+    warmup=2,
+    active=6,
+    repeat=1),
+    on_trace_ready=torch.profiler.tensorboard_trace_handler('./log/{}'.format(output_folder)),
+    with_stack=True) as profiler:
+        for i in range(1000):
+            _ = model(input_ids,attention_mask)
+            profiler.step()
