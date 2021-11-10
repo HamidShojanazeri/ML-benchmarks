@@ -1,5 +1,5 @@
-from backends.ort import benchmark_ORT
-from backends.torchscript import benchmark_Torchscript
+from backends.ort import benchmark_ORT, profile_ORT
+from backends.torchscript import benchmark_Torchscript, profile_torchscript
 
 from argparse import ArgumentParser
 
@@ -9,21 +9,21 @@ if __name__ == '__main__':
     parser.add_argument("--duration", type=str, help="duration of benchmark run")
     parser.add_argument("--backend", type=str, help="Backend, torchscript, ort")
     parser.add_argument("--output_path", type=str, help="Where the resulting report will be saved")
-    
+    parser.add_argument("--profile", type=bool, help="flag to profile the model")
+    parser.add_argument('--batch_sizes', nargs='+', type=int)
+    parser.add_argument('--sequence_lengths', nargs='+', type=int)
     # Parse command line arguments
     args = parser.parse_args()
-    model_path = args.model_path
-    backend = args.backend
-    output_folder = args.output_path
-    duration = args.duration
-    batch_size = 1
-    sequence_length = 10
-    batch_sizes = [1,2]
-    sequence_lengths = [8,16]
-    for batch_size in batch_sizes:
-        for sequence_length in sequence_lengths:
-            if args.backend == 'ort':
-                benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder, duration)
-            elif args.backend == 'torchscript':
-                benchmark_Torchscript(model_path, batch_size,sequence_length, backend, output_folder, duration)
+
+    if args.profile and args.backend=='ort':
+        profile_ORT(args.model_path, args.batch_sizes[0],args.sequence_lengths[0], args.output_path)
+    elif args.profile and args.backend=='torchscript':
+        profile_torchscript(args.model_path, args.batch_sizes[0],args.sequence_lengths[0], args.output_path)
+    else:
+        for batch_size in args.batch_sizes:
+            for sequence_length in args.sequence_lengths:
+                if args.backend == 'ort':
+                    benchmark_ORT(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration)
+                elif args.backend == 'torchscript':
+                    benchmark_Torchscript(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration)
 
