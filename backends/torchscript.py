@@ -40,18 +40,18 @@ def benchmark_Torchscript(model_path, batch_size,sequence_length, backend, outpu
         latencies.append(latency)
     print("*******", len(latencies), sum(latencies))
     bechmark_metrics={
-        
+        "batchsize":batch_size,
+        "sequence_length": sequence_length,
         "latency_mean": np.mean(latencies),
         "latency_std": np.std(latencies),
         "throughput":round((len(latencies)/duration)*SEC_TO_MS_SCALE,2),
-
         "latency_50": np.quantile(latencies, 0.5),
         "latency_90": np.quantile(latencies, 0.9),
         "latency_95": np.quantile(latencies, 0.95),
         "latency_99": np.quantile(latencies, 0.99),
         "latency_999": np.quantile(latencies, 0.999),
     }
-    csv_writer(bechmark_metrics, backend, batch_size,sequence_length, output_folder)
+    return bechmark_metrics
     
 def profile_torchscript(model_path, batch_size,sequence_length, output_folder):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
