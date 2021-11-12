@@ -13,10 +13,11 @@ def get_dummy_token(tokenizer) -> str:
 def get_dummy_inputs(batch_size: int, seq_len: int, tokenizer) -> List[List[str]]:
     return [[get_dummy_token(tokenizer)] * seq_len] * batch_size
 
-def csv_writer(bechmark_metrics, backend, batch_size,sequence_length, output_folder):
-    file_name = "resutls_{}_{}_{}.csv".format(backend,batch_size,sequence_length)
+def csv_writer(benchmarks_list, backend, output_folder):
+    fieldnames = ["batchsize","sequence_length","latency_mean","latency_std","throughput","latency_50","latency_90","latency_95","latency_99","latency_999"]
+    file_name = "resutls_{}.csv".format(backend)
     output_dir = os.path.join(output_folder, file_name)
     with open(output_dir,'w') as csv_file:
-        writer = csv.writer(csv_file)
-        for key, value in bechmark_metrics.items():
-            writer.writerow([key, value])
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(benchmarks_list)
