@@ -1,5 +1,6 @@
 from backends.ort import benchmark_ORT, profile_ORT
 from backends.torchscript import benchmark_Torchscript, profile_torchscript
+from utils.utils import csv_writer
 
 from argparse import ArgumentParser
 
@@ -20,10 +21,14 @@ if __name__ == '__main__':
     elif args.profile and args.backend=='torchscript':
         profile_torchscript(args.model_path, args.batch_sizes[0],args.sequence_lengths[0], args.output_path)
     else:
+        benchmarks_list =[]
         for batch_size in args.batch_sizes:
             for sequence_length in args.sequence_lengths:
                 if args.backend == 'ort':
-                    benchmark_ORT(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration)
+                    benchmarks_list.append(benchmark_ORT(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration))
+                    csv_writer(benchmarks_list, args.backend, args.output_path)
                 elif args.backend == 'torchscript':
-                    benchmark_Torchscript(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration)
+                    benchmarks_list.append(benchmark_Torchscript(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration))
+                    csv_writer(benchmarks_list, args.backend, args.output_path)
+
 
