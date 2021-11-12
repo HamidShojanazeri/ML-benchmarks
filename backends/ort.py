@@ -53,6 +53,8 @@ def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder
         latencies.append(latency)
         # Compute run statistics
     bechmark_metrics={
+        "batchsize":batch_size,
+        "sequence_length": sequence_length,
         "latency_mean": np.mean(latencies),
         "latency_std": np.std(latencies),
         "throughput":round((len(latencies)/duration)*SEC_TO_MS_SCALE,2),
@@ -62,7 +64,8 @@ def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder
         "latency_99": np.quantile(latencies, 0.99),
         "latency_999": np.quantile(latencies, 0.999),
     }
-    csv_writer(bechmark_metrics, backend, batch_size,sequence_length, output_folder)
+    return bechmark_metrics
+    
 
 def profile_ORT(model_path, batch_size,sequence_length, output_folder):
     model = onnxruntime.InferenceSession(model_path)   
