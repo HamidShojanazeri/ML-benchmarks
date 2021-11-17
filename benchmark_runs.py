@@ -1,5 +1,6 @@
 from backends.ort import benchmark_ORT, profile_ORT
 from backends.torchscript import benchmark_Torchscript, profile_torchscript
+from backends.lightseq import benchmark_LightSeq, profile_LightSeq
 from utils.utils import csv_writer
 
 from argparse import ArgumentParser
@@ -8,7 +9,7 @@ if __name__ == '__main__':
     parser = ArgumentParser("Model benchmarking")
     parser.add_argument("--model_path", type=str, help="The path to the trained/optimzied model")
     parser.add_argument("--duration", type=str, help="duration of benchmark run")
-    parser.add_argument("--backend", type=str, help="Backend, torchscript, ort")
+    parser.add_argument("--backend", type=str, help="Backend, torchscript, ort, or lightseq")
     parser.add_argument("--output_path", type=str, help="Where the resulting report will be saved")
     parser.add_argument("--profile", type=bool, help="flag to profile the model")
     parser.add_argument('--batch_sizes', nargs='+', type=int)
@@ -20,6 +21,8 @@ if __name__ == '__main__':
         profile_ORT(args.model_path, args.batch_sizes[0],args.sequence_lengths[0], args.output_path)
     elif args.profile and args.backend=='torchscript':
         profile_torchscript(args.model_path, args.batch_sizes[0],args.sequence_lengths[0], args.output_path)
+    elif args.profile and args.backend=='lightseq':
+        profile_LightSeq(args.model_path, args.batch_sizes[0],args.sequence_lengths[0], args.output_path)
     else:
         benchmarks_list =[]
         for batch_size in args.batch_sizes:
@@ -30,5 +33,8 @@ if __name__ == '__main__':
                 elif args.backend == 'torchscript':
                     benchmarks_list.append(benchmark_Torchscript(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration))
                     csv_writer(benchmarks_list, args.backend, args.output_path)
+                elif args.backend == 'lightseq':
+                    benchmarks_list.append(benchmark_LightSeq(args.model_path, batch_size,sequence_length, args.backend, args.output_path, args.duration))
+                    csv_writer(benchmarks_list, args.backend, args.output_path)                    
 
 
