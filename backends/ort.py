@@ -1,7 +1,7 @@
 from pathlib import Path
 from transformers.convert_graph_to_onnx import convert
-from onnxruntime_tools import optimizer
-from onnxruntime_tools.transformers.onnx_model_bert import BertOptimizationOptions
+# from onnxruntime_tools import optimizer
+# from onnxruntime_tools.transformers.onnx_model_bert import BertOptimizationOptions
 from transformers import BertTokenizerFast
 import onnxruntime
 
@@ -52,12 +52,13 @@ def benchmark_ORT(model_path, batch_size,sequence_length, backend, output_folder
         latency = (perf_counter() - start_time)*SEC_TO_MS_SCALE
         latencies.append(latency)
         # Compute run statistics
+    print("*******", len(latencies), sum(latencies))
     bechmark_metrics={
         "batchsize":batch_size,
         "sequence_length": sequence_length,
         "latency_mean": np.mean(latencies),
         "latency_std": np.std(latencies),
-        "throughput":round((len(latencies)/duration)*SEC_TO_MS_SCALE,2),
+        "throughput":round(((len(latencies)/duration)*batch_size)*SEC_TO_MS_SCALE,2),
         "latency_50": np.quantile(latencies, 0.5),
         "latency_90": np.quantile(latencies, 0.9),
         "latency_95": np.quantile(latencies, 0.95),
