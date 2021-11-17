@@ -54,7 +54,7 @@ def benchmark_LightSeq(model_path, batch_size,sequence_length, backend, output_f
         "sequence_length": sequence_length,
         "latency_mean": np.mean(latencies),
         "latency_std": np.std(latencies),
-        "throughput":round((len(latencies)/duration)*SEC_TO_MS_SCALE,2),
+        "throughput":round(((len(latencies)/duration)*batch_size)*SEC_TO_MS_SCALE,2),
         "latency_50": np.quantile(latencies, 0.5),
         "latency_90": np.quantile(latencies, 0.9),
         "latency_95": np.quantile(latencies, 0.95),
